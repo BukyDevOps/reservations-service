@@ -2,7 +2,9 @@ package buky.example.reservationsservice.controller;
 
 
 import buky.example.reservationsservice.enumerations.ReservationStatus;
+import buky.example.reservationsservice.exceptions.ActionNotPermittedException;
 import buky.example.reservationsservice.model.Reservation;
+import buky.example.reservationsservice.security.HasRole;
 import buky.example.reservationsservice.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,37 +19,42 @@ public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping
-    public Reservation makeReservation(@RequestBody Reservation reservation) {
-        //TODO set userid from jwt... + ODREDITI TOTAL PRICE
-        return reservationService.makeReservation(reservation);
+    @HasRole("GUEST")
+    public Reservation makeReservation(@RequestBody Reservation reservation, Long userId) {
+        Reservation response;
+        try {
+            response = reservationService.makeReservation(reservation, userId);
+        } catch (Exception e) {
+            reservationService.dumpInvalid(reservation, userId);
+            throw e;
+        }
+        return response;
     }
 
     /**Guest cancells*/
+    @HasRole("GUEST")
     @DeleteMapping("/cancel/{id}")
-    public Boolean cancelReservation(@PathVariable Long id) {
-        //TODO set userid from jwt...
-        reservationService.cancel(id);
-        return true;
+    public Reservation cancelReservation(@PathVariable Long id, Long userId) {
+        return reservationService.cancel(id, userId);
     }
 
     /**Host cancells*/
     @DeleteMapping("/withdraw/{id}")
-    public Boolean withdrawReservation(@PathVariable Long id) {
-        //TODO set userid from jwt...
-        reservationService.withdraw(id);
-        return true;
+    @HasRole("HOST")
+    public Reservation withdrawReservation(@PathVariable Long id, Long userId) {
+        return reservationService.withdraw(id, userId);
     }
 
     @PostMapping("/accept/{id}")
-    public Reservation acceptReservation(@PathVariable Long id) {
-        //TODO set userid from jwt...
-        return reservationService.acceptReservation(id);
+    @HasRole("HOST")
+    public Reservation acceptReservation(@PathVariable Long id, Long userId) {
+        return reservationService.acceptReservation(id, userId);
     }
 
     @PostMapping("/deny/{id}")
-    public Reservation denyReservation(@PathVariable Long id) {
-        //TODO set userid from jwt...
-        return reservationService.denyReservation(id);
+    @HasRole("HOST")
+    public Reservation denyReservation(@PathVariable Long id, Long userId) {
+        return reservationService.declineReservation(id, userId);
     }
 
     @GetMapping("/{id}")

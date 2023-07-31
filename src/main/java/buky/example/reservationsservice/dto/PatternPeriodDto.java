@@ -1,17 +1,14 @@
 package buky.example.reservationsservice.dto;
 
-import buky.example.reservationsservice.enumerations.DayOfWeek;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Calendar;
-import java.util.Date;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
@@ -25,24 +22,17 @@ public class PatternPeriodDto extends PeriodDto {
     /**
      * for start and end date (dates included), return all dates which pass trough the day name filter...
      */
-    public Set<Date> getPeriodDates(Date start, Date end, Set<DayOfWeek> days) {
-        Set<Date> resultDates = new HashSet<>();
-        if (days.isEmpty())
+    public Set<LocalDate> getPeriodDates(LocalDate start, LocalDate end) {
+        Set<LocalDate> resultDates = new HashSet<>();
+        if (dayOfWeek.isEmpty() || start.isAfter(end))
             return resultDates;
 
-        Set<Integer> targetDayOfWeekSet = days.stream().map(DayOfWeek::ordinal).collect(Collectors.toSet());
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(start);
-
-        while (!calendar.getTime().after(end)) {
-            int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // 1 - Sunday, 2 - Monday, 6 - Saturday
-            if (targetDayOfWeekSet.contains(currentDayOfWeek)) {
-                resultDates.add(calendar.getTime());
+        while (!start.atStartOfDay().equals(end.atStartOfDay())) {
+            if (dayOfWeek.contains(start.getDayOfWeek())) {
+                resultDates.add(LocalDate.from(start));
             }
-            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            start = start.plusDays(1);
         }
-
         return resultDates;
     }
 }

@@ -10,7 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
@@ -23,10 +23,10 @@ public class Reservation {
     private Long id;
     private Long userId;
     private Long accommodationId;
-    private int guestsNum;
-    private double totalPrice;
-    private double priceByGuest;
-    private Date reservationStart;
-    private Date reservationEnd;
+    private Integer guestsNum;
+    private Double totalPrice;
+    private Double priceByGuest;
+    private LocalDate reservationStart;
+    private LocalDate reservationEnd;
     private ReservationStatus reservationStatus;
 }
