@@ -2,7 +2,6 @@ package buky.example.reservationsservice.controller;
 
 
 import buky.example.reservationsservice.enumerations.ReservationStatus;
-import buky.example.reservationsservice.exceptions.ActionNotPermittedException;
 import buky.example.reservationsservice.model.Reservation;
 import buky.example.reservationsservice.security.HasRole;
 import buky.example.reservationsservice.service.ReservationService;
@@ -80,6 +79,16 @@ public class ReservationController {
     @GetMapping("/accommodation/{id}")
     public List<Reservation> getAllByAccommodationId(@PathVariable Long id) {
         return reservationService.findAllReservationsByAccommodationId(id);
+    }
+
+    @GetMapping("/previous-reservations")
+    public Boolean userHasPreviousReservations(@RequestParam Long userId, @RequestParam Long accommodationId) {
+        return reservationService.isUserHasPreviousReservations(userId, accommodationId);
+    }
+
+    @GetMapping("/stayed-in")
+    public Boolean userStayedIn(@RequestParam Long userId, @RequestParam Long accommodationId) {
+        return reservationService.isUserStayedIn(userId, accommodationId);
     }
 
 }

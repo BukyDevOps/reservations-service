@@ -253,8 +253,7 @@ public class ReservationService {
             reservation.setReservationStatus(ReservationStatus.ACCEPTED);
             //slucaj ako nekada nije bio automatski pa je podeseno naknadno... stare pending treba obraditi...
             cancelOthersOverlapping(reservation);
-        }
-        else
+        } else
             reservation.setReservationStatus(ReservationStatus.PENDING);
     }
 
@@ -343,5 +342,22 @@ public class ReservationService {
                         ReservationStatus.PENDING,
                         reservation.getReservationStart(),
                         reservation.getReservationEnd());
+    }
+
+    public Boolean isUserHasPreviousReservations(Long userId, Long accId) {
+        return reservationRepository.existsByUserIdAndAccommodationIdAndReservationStatusNot(
+                userId,
+                accId,
+                ReservationStatus.CANCELED
+        );
+    }
+
+    public Boolean isUserStayedIn(Long userId, Long accommodationId) {
+        return reservationRepository.existsByUserIdAndAccommodationIdAndReservationEndBeforeAndReservationStatusIn(
+          userId,
+          accommodationId,
+          LocalDate.now().plusDays(1),      //zavrsava se najmanje danas ili zavrseno pre...
+          List.of(ReservationStatus.ACCEPTED, ReservationStatus.IN_PROGRESS, ReservationStatus.DONE)
+        );
     }
 }
