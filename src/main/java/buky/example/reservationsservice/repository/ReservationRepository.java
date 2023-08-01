@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -48,6 +49,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             update Reservation r set r.reservationStatus = ?1
             where r.accommodationId = ?2 and r.reservationStatus = ?3 and r.reservationStart between ?4 and ?5 and r.reservationEnd between ?4 and ?5""")
     int updateReservationStatusByDateOverlap(ReservationStatus newStatus, Long accommodationId, ReservationStatus reservationStatus, LocalDate reservationStart, LocalDate reservationEnd);
+
+    boolean existsByUserIdAndAccommodationIdAndReservationStatusNot(Long userId, Long accommodationId, ReservationStatus reservationStatus);
+
+    boolean existsByUserIdAndAccommodationIdAndReservationEndBeforeAndReservationStatusIn(Long userId, Long accommodationId, LocalDate reservationEnd, Collection<ReservationStatus> reservationStatuses);
+
 
 
 }
