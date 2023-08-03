@@ -4,9 +4,13 @@ import buky.example.reservationsservice.dto.AccommodationDto;
 import buky.example.reservationsservice.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -35,5 +39,20 @@ public class RestUtil {
         ResponseEntity<Object> responseEntity =
                 restTemplate.getForEntity(url, Object.class);
         return responseEntity.getStatusCode().is2xxSuccessful();
+    }
+
+    public List<Long> getAccommodationIdsByOwner(Long ownerId) {
+        String url = accommodationURL + "ids-by-user/" + ownerId;
+        ResponseEntity<List<Long>> responseEntity = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Long>>() {}
+        );
+
+        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+            return responseEntity.getBody();
+        }
+        return List.of();
     }
 }

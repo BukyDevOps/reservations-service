@@ -54,6 +54,21 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     boolean existsByUserIdAndAccommodationIdAndReservationEndBeforeAndReservationStatusIn(Long userId, Long accommodationId, LocalDate reservationEnd, Collection<ReservationStatus> reservationStatuses);
 
+    boolean existsByUserIdAndReservationStatusIn(Long userId, Collection<ReservationStatus> reservationStatuses);
+
+    boolean existsByAccommodationIdInAndReservationStatusIn(Collection<Long> accommodationIds, Collection<ReservationStatus> reservationStatuses);
+
+    long deleteByAccommodationIdIn(Collection<Long> accommodationIds);
+
+    long deleteByUserId(Long userId);
+
+
+
+
+
+    //checkReservationExistForHOST/GUEST
+
+
 
 
 }
