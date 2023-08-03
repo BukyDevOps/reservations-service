@@ -6,7 +6,11 @@ import buky.example.reservationsservice.exceptions.ActionNotPermittedException;
 import buky.example.reservationsservice.exceptions.DateNotAvailableException;
 import buky.example.reservationsservice.exceptions.InvalidGuestNumberException;
 import buky.example.reservationsservice.exceptions.NotFoundException;
+import buky.example.reservationsservice.messaging.messages.UserDeletionRequestMessage;
+import buky.example.reservationsservice.messaging.messages.UserDeletionResponseMessage;
+import buky.example.reservationsservice.messaging.producers.KafkaProducer;
 import buky.example.reservationsservice.model.Reservation;
+import buky.example.reservationsservice.model.enumerations.Role;
 import buky.example.reservationsservice.repository.ReservationRepository;
 import buky.example.reservationsservice.util.RestUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +28,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final RestUtil restUtil;
+    private final KafkaProducer publisher;
 
 
     public Reservation makeReservation(Reservation reservation, Long userId) {
@@ -354,10 +359,59 @@ public class ReservationService {
 
     public Boolean isUserStayedIn(Long userId, Long accommodationId) {
         return reservationRepository.existsByUserIdAndAccommodationIdAndReservationEndBeforeAndReservationStatusIn(
-          userId,
-          accommodationId,
-          LocalDate.now().plusDays(1),      //zavrsava se najmanje danas ili zavrseno pre...
-          List.of(ReservationStatus.ACCEPTED, ReservationStatus.IN_PROGRESS, ReservationStatus.DONE)
+                userId,
+                accommodationId,
+                LocalDate.now().plusDays(1),      //zavrsava se najmanje danas ili zavrseno pre...
+                List.of(ReservationStatus.ACCEPTED, ReservationStatus.IN_PROGRESS, ReservationStatus.DONE)
         );
+    }
+
+    public void userDeletionRequest(UserDeletionRequestMessage message) {
+        var response = UserDeletionResponseMessage
+                .builder()
+                .userId(message.getUserId())
+                .role(message.getUserType())
+                .permitted(false)
+                .build();
+        if (message.getUserType().equals(Role.HOST)) {
+            List<Long> accommodationIds = restUtil.getAccommodationIdsByOwner(message.getUserId());
+            if (!accommodationIds.isEmpty() && !checkReservationExistForHost(message,accommodationIds)) {
+                performOwnerDeletion(accommodationIds);
+                response.setPermitted(true);
+            }
+            publisher.send("user-deletion-permission-topic", response);
+            return;
+        }
+        //else is guest
+        if (!checkReservationExistForGuest(message)) {
+            performGuestDeletion(message.getUserId());
+            response.setPermitted(true);
+        }
+        publisher.send("user-deletion-permission-topic", response);
+    }
+
+    private void performOwnerDeletion(List<Long> accommodationIds) {
+        reservationRepository.deleteByAccommodationIdIn(accommodationIds);
+    }
+
+    private void performGuestDeletion(Long userId) {
+        reservationRepository.deleteByUserId(userId);
+    }
+
+    private boolean checkReservationExistForHost(UserDeletionRequestMessage message, List<Long> accommodationIds) {
+        return reservationRepository.existsByAccommodationIdInAndReservationStatusIn(
+                accommodationIds,
+                List.of(ReservationStatus.ACCEPTED,
+                        ReservationStatus.IN_PROGRESS)
+        );
+    }
+
+    private boolean checkReservationExistForGuest(UserDeletionRequestMessage message) {
+        return reservationRepository
+                .existsByUserIdAndReservationStatusIn(
+                        message.getUserId(),
+                        List.of(ReservationStatus.ACCEPTED,
+                                ReservationStatus.IN_PROGRESS)
+                );
     }
 }
