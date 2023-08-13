@@ -414,4 +414,9 @@ public class ReservationService {
                                 ReservationStatus.IN_PROGRESS)
                 );
     }
+
+    public List<Long> getUnavailableAccommodations(LocalDate start, LocalDate end) {
+        return reservationRepository.findAllUnavailable(start, end, List.of(ReservationStatus.IN_PROGRESS,
+                ReservationStatus.ACCEPTED));
+    }
 }
