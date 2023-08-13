@@ -34,6 +34,17 @@ public class RestUtil {
         }
     }
 
+    public Long getHostByAccommodationId(Long id) {
+        String url = accommodationURL+"/host/" + id;
+        ResponseEntity<Long> responseEntity =
+                restTemplate.getForEntity(url, Long.class);
+        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+            return responseEntity.getBody();
+        } else {
+            throw new NotFoundException(String.format("Accommodation with id: %d ,not found", id));
+        }
+    }
+
     public boolean userExistsById(Long id) {
         String url = userURL + id;
         ResponseEntity<Object> responseEntity =
