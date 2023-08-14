@@ -62,16 +62,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     long deleteByUserId(Long userId);
 
+    @Query("""
+        select r.accommodationId from Reservation r 
+        where (?1 between r.reservationStart and r.reservationEnd) or (?2 between r.reservationStart and r.reservationEnd)
+        and r.reservationStatus in ?3
+    """)
+    List<Long> findAllUnavailable(LocalDate start, LocalDate end, List<ReservationStatus> statuses);
+
     List<Reservation> findByAccommodationIdInAndReservationStatusIn(Collection<Long> accommodationIds, Collection<ReservationStatus> reservationStatuses);
 
     List<Reservation> findByAccommodationIdIn(Collection<Long> accommodationIds);
-
-
-
-
-
-
-
 
 
 

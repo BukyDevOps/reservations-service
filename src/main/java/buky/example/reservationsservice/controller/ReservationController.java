@@ -8,6 +8,7 @@ import buky.example.reservationsservice.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -89,6 +90,11 @@ public class ReservationController {
     @GetMapping("/stayed-in")
     public Boolean userStayedIn(@RequestParam Long userId, @RequestParam Long accommodationId) {
         return reservationService.isUserStayedIn(userId, accommodationId);
+    }
+
+    @GetMapping("/unavailable")
+    public List<Long> getUnavailableAccommodations(@RequestParam LocalDate start, @RequestParam LocalDate end){
+        return reservationService.getUnavailableAccommodations(start, end);
     }
 
     @GetMapping
