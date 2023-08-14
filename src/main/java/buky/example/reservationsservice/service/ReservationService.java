@@ -6,6 +6,7 @@ import buky.example.reservationsservice.exceptions.ActionNotPermittedException;
 import buky.example.reservationsservice.exceptions.DateNotAvailableException;
 import buky.example.reservationsservice.exceptions.InvalidGuestNumberException;
 import buky.example.reservationsservice.exceptions.NotFoundException;
+import buky.example.reservationsservice.messaging.messages.ReservationStatusChangedMessage;
 import buky.example.reservationsservice.messaging.messages.UserDeletionRequestMessage;
 import buky.example.reservationsservice.messaging.messages.UserDeletionResponseMessage;
 import buky.example.reservationsservice.messaging.producers.KafkaProducer;
@@ -35,15 +36,29 @@ public class ReservationService {
         validateReservation(reservation);
         setUser(reservation, userId);
         processByAccommodation(reservation);
-        //All checks pass and price is set and status is set and all others cancelled
-        return reservationRepository.save(reservation);
+        reservationRepository.save(reservation);
+
+        sendNotificationToHost(userId, reservation);
+
+        return reservation;
     }
 
     public Reservation cancel(Long id, Long userId) {
         var reservation = reservationRepository.findById(id).orElseThrow(NotFoundException::new);
         checkCancellationPermitted(reservation, userId);
         reservation.setReservationStatus(ReservationStatus.CANCELED);
-        return reservationRepository.save(reservation);
+        reservationRepository.save(reservation);
+
+        sendNotificationToHost(userId, reservation);
+
+        return reservation;
+    }
+
+    private void sendNotificationToHost(Long userId, Reservation reservation) {
+        Long hostId = restUtil.getHostByAccommodationId(reservation.getAccommodationId());
+
+        publisher.send("reservation-status-changed",
+                new ReservationStatusChangedMessage(userId, hostId, reservation.getId(), reservation.getReservationStatus()));
     }
 
     //host cancells
@@ -51,6 +66,9 @@ public class ReservationService {
         var reservation = reservationRepository.findById(id).orElseThrow(NotFoundException::new);
         checkWithdrawalPermitted(reservation, userId);
         reservation.setReservationStatus(ReservationStatus.WITHDRAWN);
+
+        sendNotificationToGuest(userId, reservation);
+
         return reservationRepository.save(reservation);
     }
 
@@ -62,6 +80,8 @@ public class ReservationService {
 
         reservation.setReservationStatus(ReservationStatus.ACCEPTED);
         //TODO notify denied? mozda promeniti query... cancelledReservationsNum?
+
+        sendNotificationToGuest(userId, reservation);
         return reservationRepository.save(reservation);
     }
 
@@ -70,7 +90,14 @@ public class ReservationService {
         checkStatus(reservation, ReservationStatus.PENDING);
         checkUserAccommodationOwner(reservation, userId);
         reservation.setReservationStatus(ReservationStatus.DENIED);
+
+        sendNotificationToGuest(userId, reservation);
         return reservationRepository.save(reservation);
+    }
+
+    private void sendNotificationToGuest(Long userId, Reservation reservation) {
+        publisher.send("reservation-status-changed",
+                new ReservationStatusChangedMessage(userId, reservation.getUserId(), reservation.getId(), reservation.getReservationStatus()));
     }
 
     public List<Reservation> findAllReservations() {
@@ -413,5 +440,10 @@ public class ReservationService {
                         List.of(ReservationStatus.ACCEPTED,
                                 ReservationStatus.IN_PROGRESS)
                 );
+    }
+
+    public List<Long> getUnavailableAccommodations(LocalDate start, LocalDate end) {
+        return reservationRepository.findAllUnavailable(start, end, List.of(ReservationStatus.IN_PROGRESS,
+                ReservationStatus.ACCEPTED));
     }
 }
