@@ -375,7 +375,7 @@ public class ReservationService {
                 .build();
         if (message.getUserType().equals(Role.HOST)) {
             List<Long> accommodationIds = restUtil.getAccommodationIdsByOwner(message.getUserId());
-            if (!accommodationIds.isEmpty() && !checkReservationExistForHost(message,accommodationIds)) {
+            if (!accommodationIds.isEmpty() && !checkReservationExistForHost(message, accommodationIds)) {
                 performOwnerDeletion(accommodationIds);
                 response.setPermitted(true);
             }
@@ -413,5 +413,16 @@ public class ReservationService {
                         List.of(ReservationStatus.ACCEPTED,
                                 ReservationStatus.IN_PROGRESS)
                 );
+    }
+
+    public List<Reservation> getForHost(Long userId, boolean onlyPending) {
+        List<Long> accommodationIds = restUtil.getAccommodationIdsByOwner(userId);
+        if (accommodationIds.isEmpty())
+            return List.of();
+
+        if (onlyPending)
+            return reservationRepository.findByAccommodationIdIn(accommodationIds);
+
+        return reservationRepository.findByAccommodationIdInAndReservationStatusIn(accommodationIds, List.of(ReservationStatus.PENDING));
     }
 }
