@@ -69,6 +69,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     """)
     List<Long> findAllUnavailable(LocalDate start, LocalDate end, List<ReservationStatus> statuses);
 
+    List<Reservation> findByAccommodationIdInAndReservationStatusIn(Collection<Long> accommodationIds, Collection<ReservationStatus> reservationStatuses);
+
+    List<Reservation> findByAccommodationIdIn(Collection<Long> accommodationIds);
 
 
 

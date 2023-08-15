@@ -97,4 +97,10 @@ public class ReservationController {
         return reservationService.getUnavailableAccommodations(start, end);
     }
 
+    @GetMapping
+    @HasRole("HOST")
+    public List<Reservation> getForHost(@RequestParam Boolean onlyPending, Long userId) {
+        return reservationService.getForHost(userId, onlyPending);
+    }
+
 }
