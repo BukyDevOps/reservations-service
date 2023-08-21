@@ -23,6 +23,7 @@ public class Reservation {
     private Long id;
     private Long userId;
     private Long accommodationId;
+    private Long hostId;
     private Integer guestsNum;
     private Double totalPrice;
     private Double priceByGuest;

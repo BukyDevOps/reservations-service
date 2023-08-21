@@ -50,7 +50,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             where r.accommodationId = ?2 and r.reservationStatus = ?3 and r.reservationStart between ?4 and ?5 and r.reservationEnd between ?4 and ?5""")
     int updateReservationStatusByDateOverlap(ReservationStatus newStatus, Long accommodationId, ReservationStatus reservationStatus, LocalDate reservationStart, LocalDate reservationEnd);
 
-    boolean existsByUserIdAndAccommodationIdAndReservationStatusNot(Long userId, Long accommodationId, ReservationStatus reservationStatus);
+    boolean existsByUserIdAndHostIdAndReservationStatusNot(Long userId, Long hostId, ReservationStatus reservationStatus);
 
     boolean existsByUserIdAndAccommodationIdAndReservationEndBeforeAndReservationStatusIn(Long userId, Long accommodationId, LocalDate reservationEnd, Collection<ReservationStatus> reservationStatuses);
 
