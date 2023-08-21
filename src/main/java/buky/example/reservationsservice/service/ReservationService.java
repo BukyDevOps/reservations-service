@@ -36,6 +36,9 @@ public class ReservationService {
         validateReservation(reservation);
         setUser(reservation, userId);
         processByAccommodation(reservation);
+
+        Long hostId = restUtil.getHostByAccommodationId(reservation.getAccommodationId());
+        reservation.setHostId(hostId);
         reservationRepository.save(reservation);
 
         sendNotificationToHost(userId, reservation);
@@ -377,9 +380,11 @@ public class ReservationService {
     }
 
     public Boolean isUserHasPreviousReservations(Long userId, Long accId) {
-        return reservationRepository.existsByUserIdAndAccommodationIdAndReservationStatusNot(
+        Long hostId = restUtil.getHostByAccommodationId(accId);
+
+        return reservationRepository.existsByUserIdAndHostIdAndReservationStatusNot(
                 userId,
-                accId,
+                hostId,
                 ReservationStatus.CANCELED
         );
     }
