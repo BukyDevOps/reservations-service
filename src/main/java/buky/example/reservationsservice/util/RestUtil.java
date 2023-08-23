@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RestUtil {
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     //TODO move to config file...
     private final String accommodationURL = "http://localhost:8082/api/accommodation/";
