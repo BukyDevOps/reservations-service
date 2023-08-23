@@ -36,6 +36,9 @@ public class ReservationService {
         validateReservation(reservation);
         setUser(reservation, userId);
         processByAccommodation(reservation);
+
+        Long hostId = restUtil.getHostByAccommodationId(reservation.getAccommodationId());
+        reservation.setHostId(hostId);
         reservationRepository.save(reservation);
 
         sendNotificationToHost(userId, reservation);
@@ -377,9 +380,11 @@ public class ReservationService {
     }
 
     public Boolean isUserHasPreviousReservations(Long userId, Long accId) {
-        return reservationRepository.existsByUserIdAndAccommodationIdAndReservationStatusNot(
+        Long hostId = restUtil.getHostByAccommodationId(accId);
+
+        return reservationRepository.existsByUserIdAndHostIdAndReservationStatusNot(
                 userId,
-                accId,
+                hostId,
                 ReservationStatus.CANCELED
         );
     }
@@ -402,7 +407,7 @@ public class ReservationService {
                 .build();
         if (message.getUserType().equals(Role.HOST)) {
             List<Long> accommodationIds = restUtil.getAccommodationIdsByOwner(message.getUserId());
-            if (!accommodationIds.isEmpty() && !checkReservationExistForHost(message,accommodationIds)) {
+            if (!accommodationIds.isEmpty() && !checkReservationExistForHost(message, accommodationIds)) {
                 performOwnerDeletion(accommodationIds);
                 response.setPermitted(true);
             }
@@ -445,5 +450,16 @@ public class ReservationService {
     public List<Long> getUnavailableAccommodations(LocalDate start, LocalDate end) {
         return reservationRepository.findAllUnavailable(start, end, List.of(ReservationStatus.IN_PROGRESS,
                 ReservationStatus.ACCEPTED));
+    }
+
+    public List<Reservation> getForHost(Long userId, boolean onlyPending) {
+        List<Long> accommodationIds = restUtil.getAccommodationIdsByOwner(userId);
+        if (accommodationIds.isEmpty())
+            return List.of();
+
+        if (onlyPending)
+            return reservationRepository.findByAccommodationIdIn(accommodationIds);
+
+        return reservationRepository.findByAccommodationIdInAndReservationStatusIn(accommodationIds, List.of(ReservationStatus.PENDING));
     }
 }
