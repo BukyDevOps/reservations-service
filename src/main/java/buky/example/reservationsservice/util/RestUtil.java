@@ -21,7 +21,7 @@ public class RestUtil {
 
     //TODO move to config file...
     private final String accommodationURL = "http://localhost:8082/api/accommodation/";
-    private final String userURL = "http://localhost:8082/api/users/";
+    private final String userURL = "http://localhost:8081/api/users/";
 
     public AccommodationDto getAccommodationById(Long id) {
         String url = accommodationURL + id;
