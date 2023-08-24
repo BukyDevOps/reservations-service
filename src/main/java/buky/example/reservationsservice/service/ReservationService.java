@@ -176,6 +176,10 @@ public class ReservationService {
     }
 
     private double calculateDayPrice(PriceDto priceList, LocalDate day) {
+
+        if (priceList.getPriceRules() == null || priceList.getPriceRules().isEmpty())
+            return priceList.getBasePrice();
+
         //if any rule applies return
         for (PriceRuleDto rule : priceList.getPriceRules()) {
             if (patternRuleAppliesToDate(rule.getPatternPeriod(), day))
@@ -189,10 +193,14 @@ public class ReservationService {
     }
 
     private boolean patternRuleAppliesToDate(PatternPeriodDto patternPeriod, LocalDate day) {
+        if(patternPeriod==null)
+            return false;
         return patternPeriod.getDayOfWeek().contains(day.getDayOfWeek());
     }
 
     private boolean rangeRuleAppliesToDate(RangePeriodDto rangePeriod, LocalDate day) {
+        if(rangePeriod==null)
+            return false;
         return !day.isBefore(rangePeriod.getStartDate()) && !day.isAfter(rangePeriod.getEndDate());
     }
 
@@ -304,7 +312,7 @@ public class ReservationService {
     }
 
     private void setUser(Reservation reservation, Long userId) {
-        if (restUtil.userExistsById(reservation.getUserId()))
+        if (restUtil.userExistsById(userId))
             reservation.setUserId(userId);
         else
             throw new NotFoundException(String.format("User with id %d not found...", userId));
