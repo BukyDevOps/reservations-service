@@ -4,6 +4,7 @@ import buky.example.reservationsservice.dto.AccommodationDto;
 import buky.example.reservationsservice.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +20,13 @@ public class RestUtil {
 
     private final RestTemplate restTemplate;
 
-    //TODO move to config file...
-    private final String accommodationURL = "http://localhost:8082/api/accommodation/";
-    private final String userURL = "http://localhost:8081/api/users/";
+    @Value(value= "${accommodation.BaseURL}")
+    private String accommodationURL;
+    @Value(value= "${user.BaseURL}")
+    private String userURL;
 
     public AccommodationDto getAccommodationById(Long id) {
-        String url = accommodationURL + id;
+        String url = accommodationURL + "/api/accommodation/" + id;
         ResponseEntity<AccommodationDto> responseEntity =
                 restTemplate.getForEntity(url, AccommodationDto.class);
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -35,7 +37,7 @@ public class RestUtil {
     }
 
     public Long getHostByAccommodationId(Long id) {
-        String url = accommodationURL+"/host/" + id;
+        String url = accommodationURL+"/api/accommodation/host/" + id;
         ResponseEntity<Long> responseEntity =
                 restTemplate.getForEntity(url, Long.class);
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -46,14 +48,14 @@ public class RestUtil {
     }
 
     public boolean userExistsById(Long id) {
-        String url = userURL + id;
+        String url = userURL + "/api/users/" + id;
         ResponseEntity<Object> responseEntity =
                 restTemplate.getForEntity(url, Object.class);
         return responseEntity.getStatusCode().is2xxSuccessful();
     }
 
     public List<Long> getAccommodationIdsByOwner(Long ownerId) {
-        String url = accommodationURL + "ids-by-user/" + ownerId;
+        String url = accommodationURL + "/api/accommodation/ids-by-user/" + ownerId;
         ResponseEntity<List<Long>> responseEntity = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
