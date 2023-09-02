@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: JDK Setup
         uses: actions/setup-java@v2
@@ -43,5 +45,30 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/buky-reservations:latest .
 
 
+      - name: Semantic versioning
+        id: versioning
+        uses: paulhatch/semantic-version@v5.1.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}-prerelease${increment}"
+
+      - name: List Docker Images (Debug Purposes)
+        run: docker images
+
       - name: Publish Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/buky-reservations:latest
+        run: |
+          docker tag ${{ secrets.DOCKER_USERNAME }}/buky-reservations:latest ${{ secrets.DOCKER_USERNAME }}/buky-reservations:${{ steps.versioning.outputs.version }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/buky-reservations:${{ steps.versioning.outputs.version }}
+
+
+      - name: Create Release
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        with:
+          tag_name: ${{ steps.versioning.outputs.version }}
+          release_name: ${{ steps.versioning.outputs.version }}
+          prerelease: true
