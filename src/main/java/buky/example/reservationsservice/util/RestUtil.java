@@ -26,7 +26,7 @@ public class RestUtil {
     private String userURL;
 
     public AccommodationDto getAccommodationById(Long id) {
-        String url = accommodationURL + id;
+        String url = accommodationURL +"/api/accommodation/" + id;
         ResponseEntity<AccommodationDto> responseEntity =
                 restTemplate.getForEntity(url, AccommodationDto.class);
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -48,7 +48,7 @@ public class RestUtil {
     }
 
     public boolean userExistsById(Long id) {
-        String url = userURL+"/api/user/" + id;
+        String url = userURL+"/api/users/" + id;
         ResponseEntity<Object> responseEntity =
                 restTemplate.getForEntity(url, Object.class);
         return responseEntity.getStatusCode().is2xxSuccessful();
