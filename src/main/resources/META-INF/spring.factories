@@ -1,0 +1,1 @@
+org.springframework.boot.env.EnvironmentPostProcessor=buky.example.reservationsservice.config.DockerSecretsDatabasePasswordProcessor

@@ -3,6 +3,7 @@ package buky.example.reservationsservice.security;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,9 @@ public class AuthInterceptor implements HandlerInterceptor, HandlerMethodArgumen
 
 
     private final RestTemplate restTemplate;
+
+    @Value(value = "${user.BaseURL}")
+    private String userUrl;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -43,7 +47,7 @@ public class AuthInterceptor implements HandlerInterceptor, HandlerMethodArgumen
                 HttpEntity<?> entity = new HttpEntity<>(headers);
 
                 try {
-                    String AUTH_SERVICE_URL = "http://localhost:8081/api/auth/authenticate";
+                    String AUTH_SERVICE_URL = userUrl + "/api/auth/authenticate";
                     ResponseEntity<Long> responseEntity = restTemplate.exchange(AUTH_SERVICE_URL, HttpMethod.GET, entity,
                             Long.class);
                     if (responseEntity.getStatusCode() == HttpStatus.OK) {
