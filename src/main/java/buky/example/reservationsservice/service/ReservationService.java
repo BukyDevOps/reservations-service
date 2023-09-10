@@ -16,6 +16,7 @@ import buky.example.reservationsservice.repository.ReservationRepository;
 import buky.example.reservationsservice.util.RestUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
@@ -388,12 +390,10 @@ public class ReservationService {
     }
 
     public Boolean isUserHasPreviousReservations(Long userId, Long accId) {
-        Long hostId = restUtil.getHostByAccommodationId(accId);
-
-        return reservationRepository.existsByUserIdAndHostIdAndReservationStatusNot(
+        return reservationRepository.existsByUserIdAndHostIdAndReservationStatusNotIn(
                 userId,
-                hostId,
-                ReservationStatus.CANCELED
+                accId,
+                List.of(ReservationStatus.CANCELED, ReservationStatus.INVALID, ReservationStatus.PENDING, ReservationStatus.ACCEPTED)
         );
     }
 
@@ -415,27 +415,33 @@ public class ReservationService {
                 .build();
         if (message.getUserType().equals(Role.HOST)) {
             List<Long> accommodationIds = restUtil.getAccommodationIdsByOwner(message.getUserId());
-            if (!accommodationIds.isEmpty() && !checkReservationExistForHost(message, accommodationIds)) {
+            accommodationIds = accommodationIds.stream().map(a -> (long) a).toList();
+            accommodationIds.add(-1L);
+
+            if (!checkReservationExistForHost(message, accommodationIds)) {
                 performOwnerDeletion(accommodationIds);
                 response.setPermitted(true);
             }
+            System.out.println("Saljem user deletion topic: " + response.isPermitted());
             publisher.send("user-deletion-permission-topic", response);
             return;
         }
         //else is guest
         if (!checkReservationExistForGuest(message)) {
+            System.out.println("Ima rezervacija gost!");
             performGuestDeletion(message.getUserId());
             response.setPermitted(true);
         }
+        System.out.println("Saljem user deletion topic za gosta: " + response.isPermitted());
         publisher.send("user-deletion-permission-topic", response);
     }
 
     private void performOwnerDeletion(List<Long> accommodationIds) {
-        reservationRepository.deleteByAccommodationIdIn(accommodationIds);
+        reservationRepository.removeByAccommodationIdIn(accommodationIds);
     }
 
     private void performGuestDeletion(Long userId) {
-        reservationRepository.deleteByUserId(userId);
+        reservationRepository.removeByUserId(userId);
     }
 
     private boolean checkReservationExistForHost(UserDeletionRequestMessage message, List<Long> accommodationIds) {

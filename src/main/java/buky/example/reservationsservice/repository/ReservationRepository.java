@@ -30,8 +30,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             where
             r.accommodationId = ?1 and 
             r.reservationStatus = ?4 and 
-            r.reservationStart between ?2 and ?3 and 
-            r.reservationEnd between ?2 and ?3""")
+            ((r.reservationStart between ?2 and ?3) or 
+            (r.reservationEnd between ?2 and ?3) or
+            (?2 between r.reservationStart and r.reservationEnd) or
+            (?3 between r.reservationStart and r.reservationEnd))""")
     boolean existsByAccommodationIdAndReservationOverlap(@NonNull Long accommodationId, @NonNull LocalDate reservationStart, @NonNull LocalDate reservationEnd, @NonNull ReservationStatus status);
 
     @Query("""
@@ -39,8 +41,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             where 
             r.accommodationId = ?1 and
             r.reservationStatus = ?4 and 
-            r.reservationStart between ?2 and ?3 and 
-            r.reservationEnd between ?2 and ?3""")
+            r.reservationStart between ?2 and ?3 or 
+            r.reservationEnd between ?2 and ?3 or
+            ?2 between r.reservationStart and r.reservationEnd or
+            ?3 between r.reservationStart and r.reservationEnd""")
     List<Reservation> findByAccommodationIdAndReservationOverlap(@NonNull Long accommodationId, @NonNull LocalDate reservationStart, @NonNull LocalDate reservationEnd, @NonNull ReservationStatus status);
 
     @Transactional
@@ -50,7 +54,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             where r.accommodationId = ?2 and r.reservationStatus = ?3 and r.reservationStart between ?4 and ?5 and r.reservationEnd between ?4 and ?5""")
     int updateReservationStatusByDateOverlap(ReservationStatus newStatus, Long accommodationId, ReservationStatus reservationStatus, LocalDate reservationStart, LocalDate reservationEnd);
 
-    boolean existsByUserIdAndHostIdAndReservationStatusNot(Long userId, Long hostId, ReservationStatus reservationStatus);
+    boolean existsByUserIdAndHostIdAndReservationStatusNotIn(Long userId, Long hostId, List<ReservationStatus> reservationStatuses);
 
     boolean existsByUserIdAndAccommodationIdAndReservationEndBeforeAndReservationStatusIn(Long userId, Long accommodationId, LocalDate reservationEnd, Collection<ReservationStatus> reservationStatuses);
 
@@ -58,9 +62,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     boolean existsByAccommodationIdInAndReservationStatusIn(Collection<Long> accommodationIds, Collection<ReservationStatus> reservationStatuses);
 
-    long deleteByAccommodationIdIn(Collection<Long> accommodationIds);
+    long removeByAccommodationIdIn(Collection<Long> accommodationIds);
 
-    long deleteByUserId(Long userId);
+    long removeByUserId(Long userId);
 
     @Query("""
         select r.accommodationId from Reservation r 
